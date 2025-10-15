@@ -1,0 +1,18 @@
+#!/bin/sh
+
+folder=/media/Backup/MobileSync
+netmuxd=netmuxd-x86_64-linux-gnu
+
+# cd "$folder"
+
+"$folder/$netmuxd" --disable-unix --host 127.0.0.1 &
+pid=$!
+
+# Wait a little bit until netmuxd finds device
+sleep 30
+
+# Start (incremental) backup
+USBMUXD_SOCKET_ADDRESS=127.0.0.1:27015 OPENSSL_CONF="$folder/openssl-weak.conf" idevicebackup2 backup -n --full "$folder"
+
+kill $pid
+

@@ -1,0 +1,28 @@
+#!/bin/sh
+
+folder=/media/Backup/MobileSync
+netmuxd=netmuxd-x86_64-linux-gnu
+
+
+echo "Preparing compatible OpenSSL configuration"
+
+# From 	https://github.com/libimobiledevice/libimobiledevice/issues/1606#issuecomment-2543116644
+cat <<EOF > "$folder/openssl-weak.conf"
+.include /etc/ssl/openssl.cnf
+[openssl_init]
+alg_section = evp_properties
+[evp_properties]
+rh-allow-sha1-signatures = yes
+EOF
+
+
+
+echo "Getting netmuxd binary..."
+
+latest_netmuxd=`wget -q -O - https://api.github.com/repos/jkcoxson/netmuxd/releases/latest | jq -r '.assets[].browser_download_url' | grep $netmuxd`
+
+wget -q $latest_netmuxd -O "$folder/$netmuxd"
+
+chmod a+x "$folder/$netmuxd"
+
+
