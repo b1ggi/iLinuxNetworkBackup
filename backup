@@ -1,5 +1,14 @@
 #!/bin/sh
 
+PROG_NAME=iBackup
+if [ -n "$TMUX" ]; then
+	tmux rename-window "$PROG_NAME"
+	trap 'tmux rename-window "$PROG_NAME finished"' EXIT
+else
+	printf '\033]0;%s\007' $PROG_NAME
+	trap 'printf "\033]0;%s\007" "$PROG_NAME finished"' EXIT
+fi
+
 folder=/media/Backup/MobileSync
 netmuxd=netmuxd-x86_64-linux-gnu
 
@@ -9,10 +18,10 @@ netmuxd=netmuxd-x86_64-linux-gnu
 pid=$!
 
 # Wait a little bit until netmuxd finds device
-sleep 30
+sleep 10
 
 # Start (incremental) backup
-USBMUXD_SOCKET_ADDRESS=127.0.0.1:27015 OPENSSL_CONF="$folder/openssl-weak.conf" idevicebackup2 backup -n --full "$folder"
+USBMUXD_SOCKET_ADDRESS=127.0.0.1:27015 OPENSSL_CONF="$folder/openssl-weak.conf" time idevicebackup2 backup -n --full "$folder"
 
 kill $pid
 
