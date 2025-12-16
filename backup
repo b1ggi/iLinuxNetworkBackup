@@ -9,19 +9,17 @@ else
 	trap 'printf "\033]0;%s\007" "$PROG_NAME finished"' EXIT
 fi
 
-folder=/media/Backup/MobileSync
-netmuxd=netmuxd-x86_64-linux-gnu
+folder=/BACKUPFOLDER
+netmuxd=/usr/local/bin/netmuxd-x86_64-linux-gnu
 
-# cd "$folder"
-
-"$folder/$netmuxd" --disable-unix --host 127.0.0.1 &
+"$netmuxd" --disable-unix --host 127.0.0.1 &
 pid=$!
 
 # Wait a little bit until netmuxd finds device
 sleep 10
 
 # Start (incremental) backup
-USBMUXD_SOCKET_ADDRESS=127.0.0.1:27015 OPENSSL_CONF="$folder/openssl-weak.conf" time idevicebackup2 backup -n --full "$folder"
+USBMUXD_SOCKET_ADDRESS=127.0.0.1:27015" time idevicebackup2 backup -n --full "$folder"
 
 kill $pid
 
