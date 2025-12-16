@@ -1,39 +1,16 @@
 OK guys, I'm moving to 100% satisfying solution with [libimobiledevice](https://libimobiledevice.org/), which is packaged in most Linux distributions, and [Jackson Coxson's netmuxd](https://github.com/jkcoxson/netmuxd). Netmuxd complements usbmuxd with network capabilities and both must run together.
 
-Netmuxd was not available in my platform package set, and OpenSSL needs a little tweeking, so a preparation script is required. Here are the steps to prepare my Fedora 42 and **successfully backup my iPhone over the network**. Nothing has to be done as root, **all scripts and commands executed by my regular user**.
+Here are the steps to prepare my Fedora 42 and **successfully backup my iPhone over the network**. Nothing has to be done as root, **all scripts and commands executed by my regular user**.
 
 ## Prepare things
-This script will discover [latest version of netmuxd](https://github.com/jkcoxson/netmuxd/releases/tag/v0.3.0) for my platform and download it, and will prepare a configuration file for OpenSSL, so pairing won't fail.
+This script will discover [latest version of netmuxd](https://github.com/jkcoxson/netmuxd/releases/tag/v0.3.0) for my platform and download it
 ```shell
-#!/bin/sh
-
-folder=/media/Backup/MobileSync
-netmuxd=netmuxd-x86_64-linux-gnu
-
-echo "Preparing compatible OpenSSL configuration"
-
-# From  https://github.com/libimobiledevice/libimobiledevice/issues/1606#issuecomment-2543116644
-cat <<EOF > "$folder/openssl-weak.conf"
-.include /etc/ssl/openssl.cnf
-[openssl_init]
-alg_section = evp_properties
-[evp_properties]
-rh-allow-sha1-signatures = yes
-EOF
-
-echo "Getting netmuxd binary..."
-
-latest_netmuxd=`wget -q -O - https://api.github.com/repos/jkcoxson/netmuxd/releases/latest | jq -r '.assets[].browser_download_url' | grep $netmuxd`
-
-wget -q $latest_netmuxd -O "$folder/$netmuxd"
-
-chmod a+x "$folder/$netmuxd"
+prepare-script
 ```
 
 ## First pair device with a USB cable
-We'll use the OpenSSL configuration file created above
 ```shell
-OPENSSL_CONF=/media/Backup/MobileSync/openssl-weak.conf idevicepair pair
+idevicepair pair
 ```
 This creates some required signatures in `/var/lib/lockdown/{device_UDID}.plist`
 
@@ -46,21 +23,7 @@ Since backup is mostly controlled by the device, this method also works for incr
 
 Your device will ask for your pin and then start backup.
 ```shell
-#!/bin/sh
-
-folder=/media/Backup/MobileSync
-netmuxd=netmuxd-x86_64-linux-gnu
-
-"$folder/$netmuxd" --disable-unix --host 127.0.0.1 &
-pid=$!
-
-# Wait a little bit until netmuxd finds device
-sleep 15
-
-# Start (incremental) backup
-USBMUXD_SOCKET_ADDRESS=127.0.0.1:27015 OPENSSL_CONF="$folder/openssl-weak.conf" idevicebackup2 backup -n --full "$folder"
-
-kill $pid
+backup-script
 ```
 You might need to change these scripts a bit if you have multiple devices to backup.
 
